@@ -8,6 +8,7 @@ class LoLSignature
 	private $userData;
 
 	public function __construct($key, $region) {
+		$region = strtolower($region);
 		$this->region = $region;
 		$this->base = "https://" . $region . ".api.pvp.net/api/lol/" . $region;
 		$this->suffix = "?api_key=" . $key;
