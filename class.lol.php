@@ -8,7 +8,6 @@ class LoLSignature
 	private $userData;
 
 	public function __construct($key, $region) {
-		$region = strtolower($region);
 		$this->region = $region;
 		$this->base = "https://" . $region . ".api.pvp.net/api/lol/" . $region;
 		$this->suffix = "?api_key=" . $key;
@@ -21,6 +20,33 @@ class LoLSignature
 
 		if (isset($lolJSON[strtolower($user)])) {
 			$this->userData = $lolJSON[strtolower($user)];
+
+			if ($this->userData["summonerLevel"] == 30) {
+				$endpoint = $this->base . "/v2.5/league/by-summoner/" . $this->userData["id"] . $this->suffix;
+				$response = $this->_fetch($endpoint);
+
+				if (empty($response)) {
+					$this->userData["rank"] = "Unranked";
+				}
+				else {					
+					$lolJSON = json_decode($response, true);
+					reset($lolJSON);
+					$firstKey = key($lolJSON);
+
+					$rank = $lolJSON[$firstKey][0]["tier"] . " ";
+					foreach ($lolJSON[$firstKey][0]["entries"] as $entry) {
+						if (strtolower($entry["playerOrTeamName"]) == strtolower($user)) {
+							$rank .= $entry["division"] . " (" . $entry["leaguePoints"] . " LP)";
+							break;
+						}
+					}
+
+					$this->userData["rank"] = $rank;
+				}
+			}
+			else {
+				$this->userData["rank"] = "Unranked";
+			}
 		}
 		else {
 			throw new Exception("Invalid summoner username.");
@@ -44,7 +70,7 @@ class LoLSignature
 		$profilePic = imagecreatetruecolor($resizeTo, $resizeTo);
 		imagecopyresized($profilePic, $origProfilePic, 0, 0, 0, 0, $resizeTo, $resizeTo, 128, 128);
 
-		$sig = imagecreatetruecolor(400, 150);
+		$sig = imagecreatetruecolor(400, 200);
 		$bg = imagecolorallocate($sig, 36, 33, 33);
 		imagefill($sig, 0, 0, $bg);
 
@@ -54,8 +80,9 @@ class LoLSignature
 		imagettftext($sig, 37, 0, $center, 69, $userColor, $font, $this->userData["name"]);
 
 		$otherColor = imagecolorallocate($sig, 195, 199, 208);
-		imagettftext($sig, 23, 0, 20, 111, $otherColor, $font, "Level: " . $this->userData["summonerLevel"]);
-		imagettftext($sig, 23, 0, 20, 142, $otherColor, $font, "Region: " . $this->GetFullRegionName());
+		imagettftext($sig, 23, 0, 20, 121, $otherColor, $font, "Level: " . $this->userData["summonerLevel"]);
+		imagettftext($sig, 23, 0, 20, 152, $otherColor, $font, "Region: " . $this->GetFullRegionName());
+		imagettftext($sig, 23, 0, 20, 183, $otherColor, $font, "Rank: " . $this->userData["rank"]);
 
 		imagepng($sig);
 		imagedestroy($sig);

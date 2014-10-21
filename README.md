@@ -1,7 +1,7 @@
 LoL-Signature
 =============
 
-Example result: http://i.imgur.com/bmuaLd7.png
+Example result: http://i.imgur.com/X0XLcoW.png
 
 To use this, you will need an API key. You can get this from https://developer.riotgames.com/sign-in
 
